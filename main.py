@@ -2,17 +2,30 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 import pprint
 from unidecode import unidecode
+import os
+import sys
 
 pp = pprint.PrettyPrinter()
 
+geckodriver = ''
+url = input()
 
-def start_selenium(url):
+if sys.platform == "linux":
+    geckodriver = os.getcwd() + os.sep + "linux_geckodriver"
+elif sys.platform == "win32":
+    geckodriver = os.getcwd() + os.sep + "win_geckodriver.exe"
+
+
+def start_selenium(url, geckodriver=None):
     # Settings of webdriver
     options = webdriver.FirefoxOptions()
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--incognito')
     options.add_argument('--headless')
-    driver = webdriver.Firefox(options=options)
+    if geckodriver:
+        driver = webdriver.Firefox(executable_path=geckodriver, options=options)
+    else:
+        driver = webdriver.Firefox(options=options)
     driver.get(url)
     try:
         driver.current_url
@@ -22,8 +35,7 @@ def start_selenium(url):
     return driver
 
 
-driver = start_selenium(
-    "https://aliexpress.ru/item/1005002841283056.html?spm=a2g2w.detail.seller_rcmd.4.482b2547QMaAK3&_evo_buckets=165609,165598,188873,194275,299287,224373&sku_id=12000022420107922&gps-id=pcDetailBottomMoreThisSeller&scm=1007.13339.291025.0&scm_id=1007.13339.291025.0&scm-url=1007.13339.291025.0&pvid=496dd18e-a026-4c37-a2ea-e3666b3ec68a&_t=gps-id:pcDetailBottomMoreThisSeller,scm-url:1007.13339.291025.0,pvid:496dd18e-a026-4c37-a2ea-e3666b3ec68a,tpp_buckets:21387%230%23233228%235_21387%239507%23434562%237")
+driver = start_selenium(url, geckodriver)
 
 info = {
     'name': '',
