@@ -1,14 +1,15 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import pprint
-from unidecode import unidecode
 import os
 import sys
+import undetected_chromedriver as uc
+import json
 
 pp = pprint.PrettyPrinter()
 # the path for the geckodriver
 geckodriver = ''
-url = input()
+url = "https://aliexpress.ru/item/1005001835330458.html?tt=MG&af=1954_10546_19&utm_campaign=1954_10546_19&aff_platform=api-new-link-generate&srcSns=sns_VK&utm_medium=cpa&cn=20rurktlyhifkd1isq13y0mxbpuri4fy&dp=20rurktlyhifkd1isq13y0mxbpuri4fy&aff_fcid=658d1071518e4b04a383355296e109a5-1667560553911-02769-_DmADAX5&cv=2&spreadType=socialShare&aff_fsk=_DmADAX5&sk=_DmADAX5&aff_trace_key=658d1071518e4b04a383355296e109a5-1667560553911-02769-_DmADAX5&businessType=ProductDetail&terminal_id=6c2cbdab3a43481d8e2bff50e4fc13ca&utm_source=aerkol&utm_content=2&sku_id=12000017796376430"
 info = {
     'name': '',  # the full name of product
     'price': '',  # the price with discount
@@ -18,25 +19,15 @@ info = {
     'photo_links': [],  # the link on photo
 }
 
-if sys.platform == "linux":
-    geckodriver = os.getcwd() + os.sep + "linux_geckodriver"
-elif sys.platform == "win32":
-    geckodriver = os.getcwd() + os.sep + "win_geckodriver.exe"
-else:
-    print("The unknown OS")
 
-
-def start_selenium(url, geckodriver=None):
+def start_selenium(url):
     # Settings of webdriver
-    options = webdriver.FirefoxOptions()
-    options.add_argument('--ignore-certificate-errors')
-    options.add_argument('--incognito')
-    options.add_argument('--headless')
-    if geckodriver:
-        driver = webdriver.Firefox(executable_path=geckodriver, options=options)
-    else:
-        driver = webdriver.Firefox(options=options)
+    options = webdriver.ChromeOptions()
+    # options.add_argument('--incognito')
+    options.headless = True
+    driver = uc.Chrome(options=options)
     driver.get(url)
+    print("The browser was opened")
     try:
         driver.current_url
     except:
@@ -45,30 +36,43 @@ def start_selenium(url, geckodriver=None):
     return driver
 
 
-driver = start_selenium(url, geckodriver)
 
+driver = start_selenium(url)
 
 try:
+
     soup = BeautifulSoup(driver.page_source, 'lxml')
-    # 3 big table [0] is delivery from [1] is models [2] is colors
-    soup_info = soup.find_all('div', class_="SnowSku_SkuPropertyItem__skuProp__g2xnf")
+    soup_json = soup.find("script", id="__AER_DATA__").text
+    data = json.loads(soup_json)
 
-    info['name'] = soup.find('h1',
-                             'snow-ali-kit_Typography__base__1shggo snow-ali-kit_Typography-Primary__base__1xop0e snow-ali-kit_Typography__strong__1shggo snow-ali-kit_Typography__sizeHeadingXXL__1shggo SnowProductDescription_ProductName__name__13aa7 SnowProductDescription_ProductName__name-lines-2__13aa7').getText()
+    product_info = data['widgets'][3]['children'][0]['children'][0]['children'][0]['props']
+    name = product_info['name']
+    product_char = product_info['skuInfo']['propertyList']
 
-    info['price'] = unidecode(soup.find('div', class_="snow-price_SnowPrice__mainS__ugww0l").getText())
+    characteristics = {}
 
-    info['delivery_from'] = [i.getText() for i in soup_info[0].find_all("span",
-                                                                        class_="snow-ali-kit_Typography__base__1shggo snow-ali-kit_Typography-Primary__base__1xop0e snow-ali-kit_Typography__strong__1shggo")]
-    info['models'] = [i.getText() for i in soup_info[1].find_all("span",
-                                                                 class_="snow-ali-kit_Typography__base__1shggo snow-ali-kit_Typography-Primary__base__1xop0e snow-ali-kit_Typography__strong__1shggo")]
-    info['colors'] = [i.getText() for i in soup_info[2].find_all("span",
-                                                                 class_="snow-ali-kit_Typography__base__1shggo snow-ali-kit_Typography-Primary__base__1xop0e snow-ali-kit_Typography__strong__1shggo")]
-    info['photo_links'] = [i['src'] for i in soup.find("div", class_="gallery_Gallery__picList__re6q0q").find_all("img",
-                                                                                                                  class_="gallery_Gallery__image__re6q0q")]
-    pp.pprint(info)
-except:
+    characteristics['название'] = name
+    characteristics['рейтинг'] = product_info['rating']['middle']
 
+    for char in product_char:
+        ls = []
+        for value in char['values']:
+            ls.append({
+                value['name']: value['displayName']
+            })
+        characteristics[char['name']] = ls
+
+
+    photos = []
+    for photo in product_info['gallery']:
+        photos.append(photo['imageUrl'])
+    characteristics['ссылки на фото'] = photos
+
+    pp.pprint(characteristics)
+
+
+except Exception as e:
+    print(e)
     driver.close()
 
 driver.close()
