@@ -10,14 +10,6 @@ pp = pprint.PrettyPrinter()
 # the path for the geckodriver
 geckodriver = ''
 url = "https://aliexpress.ru/item/1005001835330458.html?tt=MG&af=1954_10546_19&utm_campaign=1954_10546_19&aff_platform=api-new-link-generate&srcSns=sns_VK&utm_medium=cpa&cn=20rurktlyhifkd1isq13y0mxbpuri4fy&dp=20rurktlyhifkd1isq13y0mxbpuri4fy&aff_fcid=658d1071518e4b04a383355296e109a5-1667560553911-02769-_DmADAX5&cv=2&spreadType=socialShare&aff_fsk=_DmADAX5&sk=_DmADAX5&aff_trace_key=658d1071518e4b04a383355296e109a5-1667560553911-02769-_DmADAX5&businessType=ProductDetail&terminal_id=6c2cbdab3a43481d8e2bff50e4fc13ca&utm_source=aerkol&utm_content=2&sku_id=12000017796376430"
-info = {
-    'name': '',  # the full name of product
-    'price': '',  # the price with discount
-    'delivery from': [],  # the countries from was delivered
-    'models': [],  # all models, that allowed and not.
-    'colors': [],  # allowed colors
-    'photo_links': [],  # the link on photo
-}
 
 
 def start_selenium(url):
